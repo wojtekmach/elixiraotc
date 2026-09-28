@@ -42,6 +42,11 @@ defmodule NativeSDKTest do
     executable = Path.join(dir, "beam.smp")
     run!("elixir", ["#{relocated}/link.exs", relocated, descriptor, executable])
 
+    # Helper programs such as inet_gethost, which kernel starts at boot on Linux,
+    # live in the target-specific directory of an OTP build tree.
+    [erlaotc] = Path.wildcard("#{otp}/bin/*/erlaotc")
+    bindir = Path.dirname(erlaotc)
+
     {log, status} =
       System.cmd(
         executable,
@@ -50,7 +55,7 @@ defmodule NativeSDKTest do
           "-root",
           otp,
           "-bindir",
-          "#{otp}/bin",
+          bindir,
           "-progname",
           "erl",
           "-home",
@@ -102,7 +107,6 @@ defmodule NativeSDKTest do
              )
 
     File.write!("#{release}/releases/start_erl.data", "#{manifest["erts"]} 1\n")
-    [erlaotc] = Path.wildcard("#{otp}/bin/*/erlaotc")
     bundled = Path.join(dir, "bundled")
 
     {log, status} =
